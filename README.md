@@ -8,13 +8,13 @@
 2. Install [Git](https://git-scm.com/downloads)  
 4. Open commond line, create environment and enter with the following commands:  
 
-        conda create -n PT4SU python=3.8
-        conda activate PT4SU
+        conda create -n P4SU python=3.8
+        conda activate P4SU
 
 5. Clone the repository and enter:  
 
-        git clone https://github.com/Ryan21wy/PT4SparseUnmixing.git
-        cd PT4SU
+        git clone https://github.com/Ryan21wy/P4SU.git
+        cd P4SU
 
 6. Install dependency with the following commands:
         
