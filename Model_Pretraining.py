@@ -8,19 +8,7 @@ from Utils.Seed_Everything import seed_everything
 import numpy as np
 
 
-def main(lr=0.001, wd=0.005, epochs=500, hidden_dim=128, num_head=8, model_name=None, seed=42):
-    label_path = r"Data\end4.mat"
-    lib_path = r"Data\lib_Jasper_cut.npy"
-
-    device = torch.device('cuda:0')
-
-    lib_data = np.load(lib_path)
-    lib_data = (lib_data - lib_data.min()) / (lib_data.max() - lib_data.min())
-
-    label = scipy.io.loadmat(label_path)
-    label = label['M'].T
-
-    train_data = np.concatenate([label, lib_data], axis=0)
+def main(train_data, lr=0.001, wd=0.005, epochs=500, hidden_dim=128, num_head=8, model_name=None, seed=42, device='cuda'):
     num_end, num_bands = train_data.shape
 
     # Define Model
@@ -87,6 +75,17 @@ def main(lr=0.001, wd=0.005, epochs=500, hidden_dim=128, num_head=8, model_name=
 
 
 if __name__ == "__main__":
+    label_path = r"Data\end4.mat"
+    lib_path = r"Data\lib_Jasper_cut.npy"
+
+    lib_data = np.load(lib_path)
+    lib_data = (lib_data - lib_data.min()) / (lib_data.max() - lib_data.min())
+
+    label = scipy.io.loadmat(label_path)
+    label = label['M'].T
+
+    train_data = np.concatenate([label, lib_data], axis=0)
+
     model_name = r'SpecFormer_PT.pkl'
 
     learning_rate = 5e-4
@@ -95,14 +94,16 @@ if __name__ == "__main__":
     hidden_dim = 128
     num_head = 8  # For SpecFormer
     seed = 42
+    device = torch.device('cuda:0')
 
     seed_everything(seed)
-
-    main(lr=learning_rate,
+    main(train_data,
+         lr=learning_rate,
          wd=weight_decay,
          epochs=epochs,
          hidden_dim=hidden_dim,
          num_head=num_head,
          model_name=model_name,
          seed=seed,
+         device=device,
          )
