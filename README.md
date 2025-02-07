@@ -20,6 +20,9 @@
         
         pip install -r requirements.txt
 
+## :art: Samples
+
+To learn how to pretrain and finetune your own models, some samples are available at [Google Colab](https://colab.research.google.com/drive/1-QrrRAJId5VDAYJ_UU0sJYajPEM4OH-E#scrollTo=nHvck5QLfAzp).
 
 ## 🧑‍💻 Contact
 
