@@ -22,7 +22,7 @@
 
 ## :art: Samples
 
-To learn how to pretrain and finetune your own models, some samples are available at [Google Colab](https://colab.research.google.com/drive/1-QrrRAJId5VDAYJ_UU0sJYajPEM4OH-E#scrollTo=nHvck5QLfAzp).
+To learn how to pretrain and finetune your own models, some samples are available at Google Colab [demo 1](https://colab.research.google.com/drive/1-QrrRAJId5VDAYJ_UU0sJYajPEM4OH-E#scrollTo=nHvck5QLfAzp) and [demo 2](https://colab.research.google.com/drive/1584zuBwzmcGEJAFoC2s-6ygoZxPAtZJE).
 
 ## 🧑‍💻 Contact
 
