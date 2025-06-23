@@ -42,7 +42,19 @@ def main(training_data, end_m, lr=0.001, wd=5e-3, lamda=0.001, epochs=100, hidde
         model.load_state_dict(model_dict)
         print('pretraining model loaded')
 
-    optimizer = optim.AdamW(model.parameters(), lr, weight_decay=wd)
+    opt_parameters = []
+    for name, param in model.named_parameters():
+        if 'nonlinear' in name:
+            param.requires_grad = True
+            params = {"params": param, 'lr': lr * 0.01}
+        elif name in pre_keys:
+            param.requires_grad = True
+            params = {"params": param, 'lr': lr}
+        else:
+            params = {"params": param, 'lr': lr}
+        opt_parameters.append(params)
+
+    optimizer = optim.AdamW(opt_parameters, lr, weight_decay=wd)
 
     sparsity_loss = SparseLoss(reduction='mean')
     reconstr_loss = SADLoss()
@@ -99,9 +111,9 @@ if __name__ == "__main__":
 
     pt_model_name = r'SUFormer_PT.pkl'
 
-    learning_rate = 1e-4
+    learning_rate = 5e-5
     weight_decay = 5e-3
-    lamda = 1e-2
+    lamda = 1e-1
     epochs = 100
     hidden_dim = 128
     num_head = 8  # For SUFormer
