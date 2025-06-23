@@ -2,7 +2,7 @@ import scipy
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from Models import SpecFCN, SpecCNN, SpecFormer
+from Models import SUFCN, SUCNN, SUFormer
 from Utils.Seed_Everything import seed_everything
 
 import numpy as np
@@ -12,10 +12,10 @@ def main(train_data, lr=0.001, wd=0.005, epochs=500, hidden_dim=128, num_head=8,
     num_end, num_bands = train_data.shape
 
     # Define Model
-    model = SpecFormer(num_end=num_end,
-                       num_bands=num_bands,
-                       hidden_dim=hidden_dim,
-                       num_head=num_head).to(device)
+    model = SUFormer(num_end=num_end,
+                     num_bands=num_bands,
+                     hidden_dim=hidden_dim,
+                     num_head=num_head).to(device)
 
     optimizer = optim.AdamW(model.parameters(), lr, weight_decay=wd)
     CosineLR = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=0.01 * lr)
@@ -86,7 +86,7 @@ if __name__ == "__main__":
 
     train_data = np.concatenate([label, lib_data], axis=0)
 
-    model_name = r'SpecFormer_PT.pkl'
+    model_name = r'SUFormer_PT.pkl'
 
     learning_rate = 5e-4
     weight_decay = 0.005

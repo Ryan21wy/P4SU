@@ -71,7 +71,7 @@ class SelfAttnBlock(nn.Module):
 
 class LinearLayer(nn.Module):
 
-    def __init__(self, dim_in, dim_out, activation=None, norm=None, bias=True):
+    def __init__(self, dim_in, dim_out, activation=None, norm=None, bias=True, zero_init=False):
         super().__init__()
 
         if activation:
@@ -85,6 +85,11 @@ class LinearLayer(nn.Module):
             self.norm = nn.Identity()
 
         self.linear = nn.Linear(dim_in, dim_out, bias=bias)
+
+        if zero_init:
+            nn.init.constant_(self.linear.weight, 0)
+            if bias:
+                nn.init.constant_(self.linear.bias, 0)
 
     def forward(self, x):
         x = self.linear(x)
@@ -117,9 +122,9 @@ class Conv1DLayer(nn.Module):
         return x
 
 
-class SpecFCN(nn.Module):
+class SUFCN(nn.Module):
     def __init__(self, num_end=14, num_bands=156, hidden_dim=128):
-        super(SpecFCN, self).__init__()
+        super(SUFCN, self).__init__()
 
         self.encoder = nn.Sequential(
             LinearLayer(num_bands, hidden_dim * 8, activation=nn.GELU(), norm=nn.LayerNorm(hidden_dim * 8)),
@@ -132,20 +137,27 @@ class SpecFCN(nn.Module):
         self.su = nn.Linear(hidden_dim, num_end)
         self.out_norm = nn.Softmax(1)
 
+        self.nonlinear = nn.Sequential(
+            LinearLayer(num_bands, 128, activation=nn.GELU(), norm=nn.LayerNorm(128)),
+            LinearLayer(128, num_bands, activation=nn.Tanh(), zero_init=True),
+        )
+
     def Encoder(self, x):
         x = self.encoder(x)
         x = self.su(x)
         return x
 
-    def forward(self, img):
+    def forward(self, img, end):
         enc = self.Encoder(img)
         pred = self.out_norm(enc)
-        return pred
+        pred_img = pred @ end
+        pred_img = pred_img + self.nonlinear(pred_img)
+        return pred, pred_img
 
 
-class SpecCNN(nn.Module):
+class SUCNN(nn.Module):
     def __init__(self, num_end=14, num_bands=156, hidden_dim=128):
-        super(SpecCNN, self).__init__()
+        super(SUCNN, self).__init__()
 
         f_size = math.ceil(math.ceil(math.ceil(num_bands / 3) / 3) / 3)
 
@@ -161,20 +173,27 @@ class SpecCNN(nn.Module):
         self.su = nn.Linear(hidden_dim, num_end)
         self.out_norm = nn.Softmax(1)
 
+        self.nonlinear = nn.Sequential(
+            LinearLayer(num_bands, 128, activation=nn.GELU(), norm=nn.LayerNorm(128)),
+            LinearLayer(128, num_bands, activation=nn.Tanh(), zero_init=True),
+        )
+
     def Encoder(self, x):
         x = self.encoder(x)
         x = self.su(x)
         return x
 
-    def forward(self, img):
+    def forward(self, img, end):
         enc = self.Encoder(img)
         pred = self.out_norm(enc)
-        return pred
+        pred_img = pred @ end
+        pred_img = pred_img + self.nonlinear(pred_img)
+        return pred, pred_img
 
 
-class SpecFormer(nn.Module):
+class SUFormer(nn.Module):
     def __init__(self, num_end=14, num_bands=156, hidden_dim=128, num_head=8):
-        super(SpecFormer, self).__init__()
+        super(SUFormer, self).__init__()
 
         self.patch_embed = nn.Sequential(
             nn.Conv1d(1, hidden_dim // 4, 7, 5, 3),
@@ -199,6 +218,11 @@ class SpecFormer(nn.Module):
         self.su = nn.Linear(hidden_dim, num_end)
         self.out_norm = nn.Softmax(1)
 
+        self.nonlinear = nn.Sequential(
+            LinearLayer(num_bands, 128, activation=nn.GELU(), norm=nn.LayerNorm(128)),
+            LinearLayer(128, num_bands, activation=nn.Tanh(), zero_init=True),
+        )
+
     def Encoder(self, x):
         x = self.patch_embed(x.unsqueeze(1))
         x = self.patch_norm(x.permute(0, 2, 1))
@@ -206,7 +230,9 @@ class SpecFormer(nn.Module):
         x = self.su(x)
         return x
 
-    def forward(self, img):
+    def forward(self, img, end):
         enc = self.Encoder(img)
         pred = self.out_norm(enc)
-        return pred
+        pred_img = pred @ end
+        pred_img = pred_img + self.nonlinear(pred_img)
+        return pred, pred_img

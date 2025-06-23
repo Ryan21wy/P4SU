@@ -2,7 +2,7 @@ import scipy
 import torch
 import torch.optim as optim
 
-from Models import SpecFCN, SpecCNN, SpecFormer
+from Models import SUFCN, SUCNN, SUFormer
 from Utils.Losses import SADLoss, SparseLoss
 from Utils.Seed_Everything import seed_everything
 from Utils.Dataset import Dataset
@@ -16,19 +16,18 @@ def stable(dataloader, seed):
 
 
 def main(training_data, end_m, lr=0.001, wd=5e-3, lamda=0.001, epochs=100, hidden_dim=128, num_head=8,
-         pt_model=None, seed=42, device='cuda'):
+         pt_model=None, seed=42, device='cuda', use_nonlinear=False):
     n, num_bands = training_data.shape
     num_end, num_bands = end_m.shape
 
-    end_m = torch.tensor(end_m).float().to(device)
     dataset = Dataset(training_data)
     train_dataloader = torch.utils.data.DataLoader(dataset, int(n / 10), drop_last=True, shuffle=True)
 
     # Define Model
-    model = SpecFormer(num_end=num_end,
-                       num_bands=num_bands,
-                       hidden_dim=hidden_dim,
-                       num_head=num_head).to(device)
+    model = SUFormer(num_end=num_end,
+                     num_bands=num_bands,
+                     hidden_dim=hidden_dim,
+                     num_head=num_head).to(device)
 
     pre_keys = []
     if pt_model is not None:
@@ -47,14 +46,20 @@ def main(training_data, end_m, lr=0.001, wd=5e-3, lamda=0.001, epochs=100, hidde
 
     sparsity_loss = SparseLoss(reduction='mean')
     reconstr_loss = SADLoss()
+    reconstr_loss2 = torch.nn.MSELoss()
+
+    end_m = torch.tensor(end_m).float().to(device)
 
     for epoch in range(epochs):
         model.train()
         for x in stable(train_dataloader, seed * epochs + epoch):
             x = x.float().to(device)
-            pred = model(x)
+            pred, pred_img = model(x, end_m)
 
-            loss_recon = reconstr_loss(pred @ end_m, x)
+            if use_nonlinear:
+                loss_recon = reconstr_loss(pred_img, x) + reconstr_loss2(pred_img, x)
+            else:
+                loss_recon = reconstr_loss(pred @ end_m, x) + reconstr_loss2(pred @ end_m, x)
             loss_sparse = sparsity_loss(pred)
             loss = loss_recon + lamda * loss_sparse
 
@@ -65,7 +70,7 @@ def main(training_data, end_m, lr=0.001, wd=5e-3, lamda=0.001, epochs=100, hidde
     model.eval()
     with torch.no_grad():
         test_data = torch.tensor(training_data).float().to(device)
-        pred = model(test_data)
+        pred, pred_img = model(test_data, end_m)
         a = pred.detach().cpu().numpy()
         a[a < 0.01] = 0
         a = a / (np.sum(a, axis=1, keepdims=True) + 1e-6)
@@ -92,16 +97,17 @@ if __name__ == "__main__":
 
     end_m = np.concatenate([label, lib_data], axis=0)
 
-    pt_model_name = r'SpecFormer_PT.pkl'
+    pt_model_name = r'SUFormer_PT.pkl'
 
     learning_rate = 1e-4
     weight_decay = 5e-3
     lamda = 1e-2
     epochs = 100
     hidden_dim = 128
-    num_head = 8  # For SpecFormer
+    num_head = 8  # For SUFormer
     seed = 42
     device = torch.device('cuda')
+    use_nonlinear_decoder = True
 
     seed_everything(seed)
     pred = main(training_data,
@@ -114,13 +120,14 @@ if __name__ == "__main__":
                 num_head=num_head,
                 pt_model=pt_model_name,
                 seed=seed,
-                device=device)
+                device=device,
+                use_nonlinear=use_nonlinear_decoder,)
 
     a_t = label_data['A']
 
     pred = pred.T
 
     rmse_a = np.sqrt(np.mean((pred[:label.shape[0]] - a_t) ** 2))
-    rmse = np.sqrt(np.mean((pred[:label.shape[0]] - a_t) ** 2, axis=(1)))
+    rmse = np.sqrt(np.mean((pred[:label.shape[0]] - a_t) ** 2, axis=1))
     print('Overall RMSE: ', rmse_a)
     print('RMSE: ', rmse)
