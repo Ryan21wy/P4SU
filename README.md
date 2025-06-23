@@ -1,6 +1,6 @@
 ## A Versatile Pre-training Method for Sparse Unmixing of Hyperspectral Images
 
-![Figure1-4](https://github.com/user-attachments/assets/7907f661-bd32-4d34-98c0-00f4c429683d)
+![Figure1-7](https://github.com/user-attachments/assets/81230595-fb8b-4289-8cb8-c0e3fadd9b9f)
 
 ## 🔨 Installation
   
@@ -20,6 +20,9 @@
         
         pip install -r requirements.txt
 
+## :art: Samples
+
+To learn how to pretrain and finetune your own models, some samples are available at Google Colab [demo 1](https://colab.research.google.com/drive/1-QrrRAJId5VDAYJ_UU0sJYajPEM4OH-E#scrollTo=nHvck5QLfAzp) and [demo 2](https://colab.research.google.com/drive/1584zuBwzmcGEJAFoC2s-6ygoZxPAtZJE).
 
 ## 🧑‍💻 Contact
 
