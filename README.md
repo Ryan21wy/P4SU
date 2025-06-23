@@ -1,6 +1,6 @@
 ## A Versatile Pre-training Method for Sparse Unmixing of Hyperspectral Images
 
-![Figure1-7](https://github.com/user-attachments/assets/81230595-fb8b-4289-8cb8-c0e3fadd9b9f)
+![Figure 1](https://github.com/user-attachments/assets/0b5fb018-82bb-46af-8dcf-e1029cd48983)
 
 ## 🔨 Installation
   
